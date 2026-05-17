@@ -3,6 +3,9 @@
 > Smoke-tested end-to-end. `init-project.sh` produces a 156-file fully-
 > scaffolded, git-initialized, placeholder-substituted project ready for
 > Claude Code, Codex, and Pi to work in.
+>
+> **Published**: https://github.com/cubixhub/agent-framework
+> **One-line install**: `npx github:cubixhub/agent-framework my-app`
 
 ## Status: COMPLETE
 
@@ -72,25 +75,25 @@ Framework/
 
 ## How to use
 
+### Option A — npx (recommended, no install needed)
+
 ```bash
-cd /home/boldog/Desktop/Framework
-
-# One-time setup
-bash scripts/install-prereqs.sh
-
-# For each new project:
-bash scripts/init-project.sh ~/path/to/my-new-project
-# Prompts: project name, branch, owner, remote, PM tool (linear|plane|none),
+npx github:cubixhub/agent-framework my-new-app
+# Prompts: branch, owner, remote, PM tool (linear|plane|none),
 #          which CLIs (all|claude|codex|pi), languages
 
-cd ~/path/to/my-new-project
-
-# Set PM API key (if you chose linear or plane)
-cp .env.example .env
-$EDITOR .env
-
-# Start any of the 3 CLIs
+cd my-new-app
+cp .env.example .env && $EDITOR .env   # if you chose linear or plane
 claude   # or codex, or pi
+```
+
+### Option B — clone + install (if you want CLI binaries auto-installed too)
+
+```bash
+git clone https://github.com/cubixhub/agent-framework.git
+cd agent-framework
+bash scripts/install-prereqs.sh       # installs claude, codex, pi, jq, tmux
+bash scripts/init-project.sh ~/path/to/my-new-project
 ```
 
 ## Smoke-test result (final)
