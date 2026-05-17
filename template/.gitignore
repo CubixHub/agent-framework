@@ -1,0 +1,45 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+
+# Build artifacts
+node_modules/
+dist/
+build/
+target/
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local state
+/tmp/
+.agent-os/memories.private.md
+/orchestration/__pycache__/
+
+# Coverage
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+.logs/
+
+# Lock files for direct deps (keep these committed)
+# package-lock.json — keep
+# pnpm-lock.yaml — keep
+# Cargo.lock — keep for binaries

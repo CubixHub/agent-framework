@@ -1,0 +1,43 @@
+---
+title: quickstart-demo — Package architecture
+type: plan
+updated: 2026-05-17
+---
+
+# Package architecture
+
+## Layer model
+```
+L5 — Embedded SDKs
+   ↑ (consumed by targets)
+L4 — Verification (orthogonal; reads L0-L3, writes verdicts)
+   ↑
+L3 — Orchestration
+   ↑
+L2 — Delegation & memory
+   ↑
+L1 — Coordination
+   ↑
+L0 — Foundations (no internal deps)
+```
+
+## Dependency graph
+<full dep-graph diagram in ASCII or mermaid>
+
+## Cross-cutting infrastructure
+- **Shared schema set**: 8-12 versioned schemas every package speaks.
+  Location: `packages/<project>-schemas/`. Treated as infrastructure.
+- **Manifest contract**: single YAML at repo root declaring active packages +
+  per-package config.
+- **Hook ordering**: canonical sequences per event, declared in project-level ADR.
+
+## Composition principles
+- One concern per package.
+- Composition over inheritance.
+- Every failure mode has an owner package.
+- Build vs adopt is a per-package decision (see [[../reuse-map]]).
+
+## Related
+- [[README]]
+- [[INTEGRATION]]
+- [[PHASES]]

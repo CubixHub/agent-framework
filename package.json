@@ -1,0 +1,62 @@
+{
+  "name": "@cubixhub/agent-framework",
+  "version": "0.1.0",
+  "description": "Deployable tri-CLI agent-native project scaffolder. Spin up new software projects optimized for Claude Code, Codex, and Pi in parallel — one source of truth, three CLI overlays, one wiki, one verification gate.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "codex",
+    "pi",
+    "agent",
+    "ai",
+    "scaffold",
+    "framework",
+    "project-template",
+    "agents",
+    "symphony",
+    "orchestration",
+    "llm-wiki",
+    "verification-first"
+  ],
+  "homepage": "https://github.com/cubixhub/agent-framework",
+  "bugs": {
+    "url": "https://github.com/cubixhub/agent-framework/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cubixhub/agent-framework.git"
+  },
+  "license": "MIT",
+  "author": "cubixhub",
+  "bin": {
+    "agent-framework": "bin/agent-framework.js",
+    "create-agent-os": "bin/agent-framework.js"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "template",
+    "skills",
+    "agents",
+    "orchestration",
+    "integrations",
+    "docs",
+    "examples/README.md",
+    "README.md",
+    "INSTALL.md",
+    "LICENSE",
+    "PROJECT-TEMPLATE-SPEC.md",
+    "DELIVERY.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "linux",
+    "darwin"
+  ],
+  "scripts": {
+    "test": "bash scripts/verify-install.sh"
+  }
+}

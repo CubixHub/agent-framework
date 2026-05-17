@@ -1,0 +1,160 @@
+---
+name: api-design
+description: REST/RPC contract design with Zod (or equivalent) parsing at the boundary, idempotent mutations, discriminated error shapes, and versioned endpoints. Use when designing or modifying an API, when reviewing a route handler, when the user mentions REST/RPC/contracts/OpenAPI/tRPC, or when adding a new endpoint. Refuses unvalidated input. Refuses inconsistent error shapes.
+---
+
+# API Design
+
+The API is a contract. The contract is enforced at the boundary or it is not enforced at all. Every request is parsed; every response is a typed Result; every mutation is idempotent.
+
+## When to use
+
+- Designing a new endpoint.
+- Reviewing a route handler / RPC procedure / GraphQL resolver.
+- User mentions REST, RPC, tRPC, OpenAPI, GraphQL, contract.
+- Adding a request validator or response serializer.
+
+# How to execute
+
+## Rule 1 — Parse at the boundary
+
+Every request body, query param, and path param is parsed into a typed value at the entry point. No raw `unknown` or `any` enters the route body.
+
+```typescript
+// GOOD (Zod)
+const CreateUserBody = z.object({
+  email: z.string().email().brand<"Email">(),
+  name: z.string().min(1).max(100),
+});
+
+app.post("/users", async (req, res) => {
+  const body = CreateUserBody.parse(req.body);  // throws → 400 via middleware
+  const user = await createUser(body);
+  res.status(201).json(serialise(user));
+});
+
+// BAD
+app.post("/users", async (req, res) => {
+  const body = req.body;  // unknown shape, full of optional fields the caller may have skipped
+  ...
+});
+```
+
+Use Zod, valibot, Effect Schema, ArkType. Pick one per project. Same library for requests and responses.
+
+## Rule 2 — Versioned URLs
+
+```
+GOOD:  POST /v1/users   POST /v2/users
+BAD:   POST /users      (then later: regret)
+```
+
+Even MVPs ship `/v1`. The first breaking change is always sooner than expected. The cost of `/v1` is one path segment; the cost of breaking unversioned callers is migration scripts forever.
+
+## Rule 3 — Mutations are idempotent
+
+Every POST that creates accepts an `Idempotency-Key` header; the server stores the result keyed by it and returns the cached response on retry.
+
+```typescript
+app.post("/v1/orders", async (req, res) => {
+  const key = req.header("Idempotency-Key");
+  if (!key) return res.status(400).json(err({ kind: "missing-idempotency-key" }));
+  const existing = await store.get(key);
+  if (existing) return res.status(existing.status).json(existing.body);
+  // ... do the work, save result keyed by `key`
+});
+```
+
+Network retries happen. Without idempotency keys, retries produce duplicate orders. With them, retries produce the same response.
+
+## Rule 4 — Error responses are a typed discriminated union
+
+```typescript
+type ApiError = {
+  kind: "validation" | "not-found" | "unauthorised" | "rate-limited" | "internal";
+  message: string;
+  details?: unknown;  // only "validation" populates this
+  requestId: string;
+};
+
+// Always returned with a JSON Content-Type
+// Always includes requestId for log correlation
+```
+
+Frontend code switches on `kind` (literal); humans read `message`; ops trace via `requestId`. Three audiences, one shape.
+
+## Rule 5 — Pagination is cursor-based
+
+```
+GET /v1/users?limit=50&cursor=<opaque>
+→ { items: [...], nextCursor: "..." | null }
+```
+
+Offset pagination breaks on inserts (items shift between requests). Cursor pagination is stable across writes. Cursors are opaque strings — never expose the underlying offset or PK.
+
+## Rule 6 — Response shape is symmetric to request shape
+
+```typescript
+// Request validates input with Zod
+const CreateUserBody = z.object({ email: ..., name: ... });
+
+// Response validates output with the SAME library
+const UserResponse = z.object({ id: ..., email: ..., name: ..., createdAt: z.string().datetime() });
+
+app.post("/v1/users", async (req, res) => {
+  const body = CreateUserBody.parse(req.body);
+  const user = await createUser(body);
+  res.status(201).json(UserResponse.parse(serialise(user)));
+});
+```
+
+Parsing the response catches drift between database shape and API shape. The compiler does not know `serialise()` is correct; the parser does.
+
+## Rule 7 — `Content-Type: application/problem+json` for errors
+
+RFC 9457 (problem details). Use it. The standard exists so clients can be written once.
+
+```
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  "type": "https://api.example.com/errors/validation",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "email is required",
+  "instance": "/v1/users",
+  "requestId": "req_01HC..."
+}
+```
+
+## Rule 8 — Public endpoints are documented as OpenAPI
+
+The schema you wrote in Zod can be generated to OpenAPI (`zod-openapi`, `@hono/zod-openapi`). Do this. Hand-written OpenAPI rots; generated OpenAPI stays correct.
+
+# Quality bar
+
+- [ ] Every request body, query, and path param parses through a schema.
+- [ ] Every response is generated by a schema (round-trip safe).
+- [ ] All POST/PUT mutations honour `Idempotency-Key`.
+- [ ] Errors use the typed discriminated shape with `requestId`.
+- [ ] URLs include `/v1/` (or higher).
+- [ ] Pagination is cursor-based.
+- [ ] OpenAPI is generated from the schemas in CI.
+
+# Anti-patterns
+
+- **Trusting `req.body` without parsing.** First production bug, guaranteed.
+- **HTTP 200 with `{ "error": "..." }`.** Use real status codes. 4xx for client errors, 5xx for server. 200 means success.
+- **Different error shapes per route.** Pick one. Document one. Enforce one.
+- **Versioning via header instead of URL.** Caches, CDNs, and `curl` users all suffer. URL versioning is boring and correct.
+- **Returning the raw DB row.** It contains fields you do not want public. Always pass through a response schema.
+- **`POST /v1/users/create`.** That is RPC pretending to be REST. Either go full RPC (`POST /v1/users.create`) or use HTTP verbs. Not both.
+- **`PATCH` with arbitrary partial bodies.** Hard to validate, hard to test, easy to break invariants. Prefer `PUT` with full bodies or domain-specific commands.
+
+# Reference
+
+- RFC 9457 (problem details for HTTP APIs).
+- Zod docs (https://zod.dev) — `.parse`, `.safeParse`, `.brand`.
+- See `matt-pocock/error-handling` for Result types backing the route handler.
+- See `matt-pocock/typescript-types` for branding and discriminated unions.

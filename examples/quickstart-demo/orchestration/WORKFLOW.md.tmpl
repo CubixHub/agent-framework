@@ -1,0 +1,109 @@
+# Orchestration Workflow (hot-reload YAML)
+
+The daemon reads the fenced YAML block below on every poll tick. Edit
+without restarting the daemon.
+
+```yaml
+# ---- timing ----
+poll_interval_seconds: 30
+max_concurrent_agents: 3
+max_turns_per_session: 10
+stall_timeout_ms: 1800000        # 30 minutes
+max_retries: 3
+retry_base_seconds: 60
+
+# ---- PM provider (linear | plane) ----
+pm_provider: linear
+
+# ---- eligible / terminal states ----
+eligible_states:
+  - Agent Queue
+  - Parent AI Review
+terminal_states:
+  - Completed
+  - Canceled
+  - Failed
+  - Human Approval
+
+# ---- verdict routing: verdict -> target state ----
+verdict_routing:
+  PASS: Evaluating
+  PROXY_PASS: Evaluating
+  FAIL: Failed
+  NEEDS_HUMAN: Parent AI Review
+  HUMAN_APPROVAL_REQUIRED: Human Approval
+  CONTINUE_EXHAUSTED: Failed
+  # CONTINUE stays in Processing; re-enters next tick
+
+# ---- @<label> -> subagent (H3 routing overrides this for some states) ----
+agent_role_routing:
+  audio-engineer: audio-engineer
+  asr-engineer: asr-engineer
+  parent-ai: parent-ai
+  scrutinizer: scrutinizer
+  code-architect: code-architect
+  code-reviewer: code-reviewer
+  research-explorer: research-explorer
+
+# ---- per-role CLI provider (claude | codex | pi) ----
+cli_provider:
+  default: claude
+  parent-ai: claude
+  scrutinizer: codex
+  code-architect: claude
+  code-reviewer: codex
+  research-explorer: pi
+
+# ---- per-CLI binary paths (override if not on $PATH) ----
+cli_bin:
+  claude: claude
+  codex: codex
+  pi: pi
+
+# ---- prompt template ----
+# Placeholders: {issue_id} {issue_title} {issue_body} {agent_role}
+#               {workspace_path} {iteration} {acceptance_criteria}
+prompt_template: |
+  You are operating as the `{agent_role}` subagent on issue {issue_id}: "{issue_title}".
+
+  Workspace (cwd): {workspace_path}
+  Iteration: {iteration}
+
+  --- ISSUE BODY (authoritative) ---
+  {issue_body}
+  ---
+
+  --- ACCEPTANCE CRITERIA (parsed from issue) ---
+  {acceptance_criteria}
+  ---
+
+  ## Verdict Honesty Rules (read carefully)
+  1. Acceptance criteria come ONLY from the issue body above. Operator chat
+     context is hints, never authority.
+  2. If operator-provided context asserts a fact you cannot verify (e.g.
+     "models staged at <path>", "tests previously passed"), VERIFY it before
+     acting. If verification fails, return `VERDICT: NEEDS_HUMAN`.
+  3. `PROXY_PASS` is only valid when ALL of:
+     a) measured artifact for the primary deliverable, OR an explicitly
+        authorized budget-decomposition proxy ADR in `ACCEPTED <ISO-Z>` state;
+     b) every deferred item is tracked as a new PM ticket BEFORE you emit
+        the verdict;
+     c) the deferral-authorizing ADR is in ACCEPTED state.
+  4. Five anti-patterns mapped to verdicts:
+     - "I think this works"          → NEEDS_HUMAN
+     - "Tests pass on my mocked rig" → NEEDS_HUMAN (re-verify on canonical)
+     - "Skipped the hard part"       → FAIL
+     - "Need another turn"           → CONTINUE
+     - "ADR conflict; needs human"   → NEEDS_HUMAN
+  5. The LAST LINE of your output MUST match exactly:
+     `VERDICT: PASS | PROXY_PASS | FAIL | NEEDS_HUMAN | CONTINUE | HUMAN_APPROVAL_REQUIRED`
+  6. Immediately above the verdict line, post the verdict comment block:
+     ```
+     VERDICT: <one of the seven>
+     Artifacts: <paths|urls>
+     Summary: <1-3 sentences>
+     Gate ref: <test-plan section or AC id>
+     ```
+
+  Begin.
+```

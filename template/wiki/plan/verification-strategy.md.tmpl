@@ -1,0 +1,56 @@
+---
+title: {{PROJECT_NAME}} — Verification Strategy
+type: plan
+tags: [verification, quality, testing]
+updated: {{DATE}}
+---
+
+# Verification Strategy
+
+> The harness refuses to call any work "done" until verification has run and
+> returned a PASS verdict. Hard gate; not a recommendation.
+
+## The 7-layer defense-in-depth stack
+| # | Layer | Catches |
+|---|---|---|
+| 1 | Static (lint, types, format, secrets, LSP) | Surface errors |
+| 2 | Unit + property | Functional correctness of units |
+| 3 | Integration | Cross-component contracts |
+| 4 | End-to-end user-flow | "App appears to work but breaks for users" |
+| 5 | Behavioural fingerprinting | Regressions binary pass/fail misses |
+| 6 | Mutation testing | Tests-that-don't-test |
+| 7 | Trace audit | Agent lying about what it did |
+
+## The 4-tier judge stack (when LLM judgement needed)
+| Tier | What | When |
+|---|---|---|
+| J0 | Deterministic graders (exit codes, schemas) | Whenever ground truth exists |
+| J1 | Distilled small judge per rubric (Phi-3-mini, Llama-3.1-8B) | Production: every action |
+| J2 | OS structured judge (Prometheus 2) | Batch / nightly |
+| J3 | Frontier spot-check (Opus, GPT-frontier) | 1% sampling, quarterly calibration |
+| J4 | Pairwise + self-consistency voting | Version comparisons |
+
+**Non-negotiable: the model that generated the artifact must not grade it.**
+
+## The 4 anti-gaming primitives
+| | Rule | Why |
+|---|---|---|
+| AG-1 | Snapshot tests before run; restore before grading | Stops "I modified tests to pass" |
+| AG-2 | Compare claimed actions vs actual diffs | Catches lying about results |
+| AG-3 | Deliberately break code; verify tests FAIL | Closes "no real tests" tautology |
+| AG-4 | E2E asserts on UI-text + server-state both | Eliminates #1 false-pass mode |
+
+## Sandbox tiers
+- S0 (~s): headless container, no rendering — default for most runs.
+- S1 (~10s): container + display + input simulation — native GUI without WebView.
+- S2 (~30s): microVM with kernel isolation — malicious-persona, untrusted code.
+- S3 (~min): real VM, per-OS runners — top-level mission validation.
+
+## Personas
+novice / expert / distracted / malicious / mobile / edge-case. Same scenario as
+"novice" vs "expert" should produce DIFFERENT verdicts — if not, verification
+isn't testing what users do.
+
+## Recording → replay → calibration
+Every session recorded by default. Recordings drive replay (regression),
+mutation testing, and the calibration dataset for judge retraining.

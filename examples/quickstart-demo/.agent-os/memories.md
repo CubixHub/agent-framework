@@ -1,0 +1,14 @@
+# quickstart-demo — Project memories
+
+Append-only decision log. Distinct from the wiki: memories are compact decisions;
+the wiki is accumulated research. Agents append a dated bullet here when a
+non-obvious decision is made.
+
+Format:
+```
+- [YYYY-MM-DD] short statement of the decision; one-line rationale; link to ADR if any
+```
+
+## Decisions
+
+<!-- agents append below -->

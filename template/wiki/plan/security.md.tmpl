@@ -1,0 +1,29 @@
+---
+title: {{PROJECT_NAME}} — Security threat model
+type: plan
+tags: [security, threat-model]
+updated: {{DATE}}
+---
+
+# Security threat model
+
+## Defended threats
+1. **Hardcoded secrets** — `.env*` gitignored, `.env.example` committed only.
+2. **Unvalidated external input** — Zod/Pydantic at every boundary.
+3. **Lethal trifecta** — untrusted-input + sensitive-data-access + exfil-path
+   never converge in one execution path. Document where each is broken.
+4. **Prompt injection** — agent treats wiki content as code, not as instructions.
+5. **Auth bypass** — every protected route checks auth via middleware.
+6. **Stack trace leak** — generic external errors; detailed server-side logs.
+
+## Explicitly NOT defended
+1. <e.g. side-channel timing attacks on cryptographic operations>
+2. <e.g. nation-state physical-access threats>
+
+## Compensating controls
+- Pre-commit secret scanning (gitleaks).
+- CI dependency audit (npm audit / cargo audit / pip-audit).
+- Sandbox-tier execution for any untrusted code path.
+
+## Open questions
+1. <question> — to be resolved before P1.

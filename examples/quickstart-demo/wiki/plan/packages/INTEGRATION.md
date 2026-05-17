@@ -1,0 +1,46 @@
+---
+title: quickstart-demo — Package integration contract
+type: plan
+updated: 2026-05-17
+---
+
+# Package integration
+
+## Extension protocol
+Packages register their integration points via the chosen agent runtime's
+extension API (Claude Code skills, Codex AGENTS.md, Pi capability packages).
+
+| Integration kind | Mechanism |
+|---|---|
+| Hooks | `.agent-os/hooks/<event>.sh` |
+| Tools | Per-runtime SDK |
+| Slash commands | Per-runtime config |
+| Schemas (data) | Shared `<project>-schemas/` package |
+
+## Shared schemas
+Versioned. Every cross-package message conforms.
+- `EventEnvelope` — every hook/tool emission
+- `CostEvent` — token + dollar accounting
+- `ArtifactMutation` — file write/edit record
+- (project-specific schemas added here)
+
+## Hook ordering
+The canonical sequence per event is declared in project-level ADR (e.g.
+`adr-006-hook-ordering.md`). The orchestrator refuses to start on collisions.
+
+## Manifest contract
+Single YAML at repo root: `manifest.yaml`. Declares active packages + per-package
+config. Parsed at startup.
+
+```yaml
+packages:
+  - name: <pkg>
+    enabled: true
+    config:
+      key: value
+```
+
+## Related
+- [[README]]
+- [[ARCHITECTURE]]
+- [[PHASES]]

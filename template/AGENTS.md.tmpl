@@ -1,0 +1,124 @@
+# {{PROJECT_NAME}} — Agent Guide
+
+> Single source of truth for **every** coding agent that touches this repo:
+> Claude Code, Codex, Pi, and any future CLI that follows the AGENTS.md
+> convention. The three CLIs read this file first; their per-CLI overlays
+> (`CLAUDE.md`, `CODEX.md`, `PI.md`) only add tool-specific notes.
+
+## Repository
+
+- **Name**: {{PROJECT_NAME}}
+- **Remote**: {{REPO_URL}}
+- **Owner**: {{OWNER}}
+- **Default branch**: {{DEFAULT_BRANCH}}
+- **Project manager**: {{PM_TOOL}}   <!-- linear | plane | none -->
+- **Languages**: {{LANGUAGES}}
+- **Status**: P0 — scaffolded, not yet implementing
+
+## Where things live
+
+| What | Where |
+|---|---|
+| This file (agent entry doc) | `AGENTS.md` |
+| Claude-Code overlay | `CLAUDE.md`, `.claude/` |
+| Codex overlay | `CODEX.md`, `.codex/` |
+| Pi overlay | `PI.md`, `SYSTEM.md`, `.pi/` |
+| Shared runtime config | `.agent-os/` (rules, hooks, skills, memories) |
+| Living knowledge wiki | `wiki/` (Karpathy LLM-wiki pattern; see §wiki) |
+| Master plan | `wiki/PLAN.md` |
+| Current state / blockers | `wiki/STATUS.md` |
+| Idea backlog | `wiki/IDEAS.md` |
+| Project memory log | `.agent-os/memories.md` |
+| Code packages (created at impl time) | `packages/` |
+| Cross-package integration tests | `tests/` |
+
+## When working in this repo
+
+1. Read `AGENTS.md` (this file) first. Then read your CLI overlay
+   (`CLAUDE.md` / `CODEX.md` / `PI.md`).
+2. Read `wiki/SCHEMA.md` before any wiki write.
+3. Apply rules matched to the file extension (`.agent-os/rules/<lang>.md`).
+4. Treat `wiki/` as authoritative — read before re-deriving.
+5. Every non-obvious decision becomes an ADR in `wiki/plan/adr/` or
+   `wiki/plan/packages/<pkg>/adr/`.
+6. Every non-obvious learning becomes a wiki page.
+7. Append project decisions to `.agent-os/memories.md` (private personal
+   memories go to `~/.agent-os/memories.md`).
+8. Never commit `.env*`, credentials, or anything in `.gitignore`.
+9. Never `git push --force` and never use `--no-verify` without explicit
+   user permission.
+10. Use conventional commits: imperative subject ≤ 50 chars, optional body.
+
+## Stack & slot table
+
+| Action | Command |
+|---|---|
+| build | <TBD — fill on first impl> |
+| test | <TBD> |
+| lint | <TBD> |
+| typecheck | <TBD> |
+| format | <TBD> |
+
+## The wiki — Karpathy LLM-Wiki pattern
+
+The wiki is the agent's long-term memory. Mental model: instead of re-deriving
+knowledge from raw sources on every query, the agent maintains a persistent,
+compounding markdown knowledge base.
+
+| Folder | What lives here | Mutability |
+|---|---|---|
+| `wiki/raw/` | Immutable sources (PDFs, transcripts, screenshots) | never modify |
+| `wiki/sources/` | One card per ingested source | agent writes |
+| `wiki/entities/` | Orgs / products / people / tools | agent writes |
+| `wiki/concepts/` | Ideas / patterns / techniques | agent writes |
+| `wiki/questions/` | Resolved Q&A | agent writes |
+| `wiki/IDEAS-details/` | Per-ID detail blocks | agent writes |
+| `wiki/plan/` | Cross-cutting planning docs + ADRs + packages docs | agent writes |
+| `wiki/log.md` | Append-only audit log | agent appends |
+
+Required frontmatter on every wiki page:
+
+```yaml
+---
+title: <human title>
+type: source | entity | concept | question | adr | package | plan
+tags: [kebab-case, list]
+updated: YYYY-MM-DD
+sources: [optional wikilinks to source pages]
+---
+```
+
+Wikilinks: `[[category/slug]]` or `[[category/slug|display text]]`. Without
+`.md` suffix. Link liberally — a link to a missing page is a TODO marker, not
+an error. Contradictions surface explicitly:
+
+```markdown
+> Contradicts [[other-page]] as of YYYY-MM-DD — <one-sentence reason>
+```
+
+Operations: ingest, query, lint. See `.agent-os/skills/llm-wiki/SKILL.md` if
+installed, or the canonical workflow in `wiki/SCHEMA.md`.
+
+## Conventions
+
+- **Commits**: Conventional Commits. `feat:`, `fix:`, `docs:`, `chore:`,
+  `refactor:`, `test:`. Subject imperative, ≤ 50 chars.
+- **Push policy**: never auto-push. The user pushes.
+- **Hooks**: hooks are mandatory; `--no-verify` is forbidden.
+- **Confidentiality**: treat private repo content as private. Never paste
+  source files into external services.
+- **PM tool**: see `.agent-os/rules/{{PM_TOOL}}.md` for issue body format,
+  state transitions, label taxonomy.
+
+## Autonomy mode
+
+`.agent-os/settings.json` declares `autonomy_mode` ∈ {M0, M1, M2, M3}:
+
+- **M0** — read-only / dry-run. No file writes.
+- **M1** — write files; never run shell commands.
+- **M2** — write + run sandboxed shell.
+- **M3** — write + run shell + auto-commit. (No auto-push at any tier.)
+
+Default: M2. Bump explicitly when you trust the task.
+
+<!-- END -->

@@ -1,0 +1,11 @@
+{
+  "project_name": "quickstart-demo",
+  "owner": "demo",
+  "default_branch": "main",
+  "pm_provider": "none",
+  "cli_active": "all",
+  "languages": "typescript python",
+  "autonomy_mode": "M1",
+  "hooks_enabled": true,
+  "skills_enabled": true
+}

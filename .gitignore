@@ -1,0 +1,44 @@
+# Local state
+.borg_state.json
+.claude-plans/
+.claude/local-state/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+/tmp/
+.logs/
+
+# Node (for the npx wrapper)
+node_modules/
+.npm/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build artifacts
+dist/
+build/
+*.tgz
+
+# Secrets (template/.gitignore already covers these for projects, but belt+braces)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+
+# OS / IDE
+.vscode/local/
+.idea/
+
+# Test scratch
+.smoke-test/

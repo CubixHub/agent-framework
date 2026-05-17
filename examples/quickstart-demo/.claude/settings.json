@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "python3 .agent-os/hooks/memory-capture.py" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "bash .agent-os/hooks/post-edit.sh" }
+        ]
+      }
+    ]
+  },
+  "skills": {
+    "search_paths": [".agent-os/skills"]
+  },
+  "agents": {
+    "search_paths": [".agent-os/agents"]
+  },
+  "memories": ".agent-os/memories.md"
+}
